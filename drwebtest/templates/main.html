@@ -1,0 +1,111 @@
+<header><center><button onclick="createNewTask()">Create new task</button></center></header>
+<!-- <div href="/tasks">Task list</a> -->
+{% block tasklist %}{% endblock %}
+<div id="pray" hidden="true">{{new_time}}</div>
+
+<script type="text/javascript" language="javascript">
+  var http_request = false;
+  var ser = Math.round(Math.random()*1000000); // Anti-caching serial number
+  var debug = false; // Set to true to show the full server response
+  
+  function ajax(httpRequestMethod, url, parameters, target)
+  {
+    http_request = false;
+    // document.getElementById(target).innerHTML = 'Wait...'
+    if (window.XMLHttpRequest)
+    { // For Mozilla, Safari, Opera, IE7
+      http_request = new XMLHttpRequest();
+      if (http_request.overrideMimeType)
+      {
+        http_request.overrideMimeType('text/plain');
+        //Change MimeType to match the data type of the server response.
+        //Examples: "text/xml", "text/html", "text/plain"
+      }
+    }
+    else if (window.ActiveXObject)
+    { // For IE6
+      try
+      {
+        http_request = new ActiveXObject("Msxml2.XMLHTTP");
+      }
+      catch (e)
+      {
+        try
+        {
+          http_request = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        catch (e)
+        {}
+      }
+    }
+    if (!http_request)
+    {
+      alert('Giving up :( Cannot create an XMLHTTP instance');
+      return false;
+    }
+    http_request.onreadystatechange = function() {updateElement(target);};
+    if (httpRequestMethod == 'GET')
+    {
+      http_request.open('GET', url + '?' + parameters, true);
+      http_request.send(null);
+      ser = ser + 1;
+    }
+    else if (httpRequestMethod == 'POST')
+    {
+      http_request.open('POST', url, true);
+      http_request.setRequestHeader('Content-Type',
+        'application/x-www-form-urlencoded');
+      http_request.send(parameters);
+    }
+    else
+    {
+      alert('Sorry, unsupported HTTP method');
+    }
+  }
+
+  function updateElement(target)
+  {
+    if (http_request.readyState == 4 && target != '')
+    {
+      if (debug == true)
+      {
+        alert(http_request.responseText);
+      }
+      if (http_request.status == 200)
+      {
+      //   document.getElementById(target).innerHTML =
+      //     http_request.responseText;
+          var json_content = JSON.parse(http_request.responseText);
+          if (json_content.status == 'ok'){
+            console.log(document.getElementById("pray").innerHTML)
+            document.getElementById("pray").innerHTML = json_content.new_time;
+            console.log(document.getElementById("pray").innerHTML)
+            console.log(json_content.new_time)
+            json_content.tasks.reverse().forEach(function(task){ //for each (var task in 
+            var element = document.getElementById('task_' + task.id);
+            if (typeof(element) != 'undefined' && element != null) {
+                document.getElementById('task_' + task.id).innerHTML = task.str_repr
+            }
+            else {
+                document.getElementById('tasks').innerHTML = '<li id="task_' + task.id + '">' + task.str_repr + '</li>' + document.getElementById('tasks').innerHTML
+            }
+            })
+          }
+      }
+      else if (debug == false)
+      {
+        alert('The server returned an error. Please set debug = true to see the full server response.');
+      }
+    }
+  }
+  
+    function createNewTask(){   
+        ajax('GET','/newtask/','','');
+    }
+
+    function updatePage(){
+        ajax('GET','/tasks','time=' + document.getElementById("pray").innerHTML,'123');
+        setTimeout(updatePage, 150);
+    }
+    setTimeout(updatePage, 500);
+</script>

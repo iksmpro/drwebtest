@@ -1,0 +1,9 @@
+{% extends "main.html" %}
+
+{% block tasklist %}
+<ul id="tasks">
+{% for task in tasks %}
+    <li id="task_{{task.id}}"> {{task.str_repr}} </li>
+{% endfor %}
+</ul>
+{% endblock %}
